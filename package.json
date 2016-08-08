@@ -4,6 +4,7 @@
     "start": "node ./index.js"
   },
   "dependencies": {
+    "koa": "^1.2.1",
     "koa-router": "^5.4.0",
     "koa-static": "^2.0.0",
     "x-ray": "^2.3.0"
