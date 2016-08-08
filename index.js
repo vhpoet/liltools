@@ -1,10 +1,12 @@
-const app = require('koa')()
-const router = require('koa-router')()
+const koa = require('koa')
+const router = require('koa-router')
 const serve = require('koa-static')
+const mount = require('koa-mount')
 const Xray = require('x-ray')
 const x = Xray()
 
-app.use(serve('html'))
+const igApp = koa()
+const igRouter = router()
 
 const getUser = (username) => {
   return new Promise((resolve, reject) => {
@@ -27,13 +29,13 @@ const getUser = (username) => {
   })
 }
 
-router.get('/get', function *() {
+igRouter.get('/get', function *() {
   const user = yield getUser(this.query.username)
 
-  this.body = '<div>ID: ' + user.id + '</div><br /><div><a href="json/' + this.query.username + '" target="_parent">JSON</a></div>'
+  this.body = '<div>ID: ' + user.id + '</div><br /><div><a href="/instagram/json/' + this.query.username + '" target="_parent">JSON</a></div>'
 })
 
-router.get('/json/:username', function *(next) {
+igRouter.get('/json/:username', function *(next) {
   const user = yield getUser(this.params.username)
 
   this.body = {
@@ -51,8 +53,14 @@ router.get('/json/:username', function *(next) {
   }
 })
 
+igApp
+  .use(serve('html/instagram'))
+  .use(igRouter.routes())
+  .use(igRouter.allowedMethods())
+
+const app = koa()
 app
-  .use(router.routes())
-  .use(router.allowedMethods())
+  .use(serve('html'))
+  .use(mount('/instagram', igApp))
 
 app.listen(3120)
